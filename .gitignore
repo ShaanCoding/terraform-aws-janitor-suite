@@ -11,3 +11,4 @@ override.tf.json
 
 lambdaFunction.zip
 terraform.exe
+node_modules

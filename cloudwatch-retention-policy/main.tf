@@ -70,7 +70,7 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
 # Bundle up the lambda function code
 data "archive_file" "lambda_function_zip" {
   type        = "zip"
-  source_file = "${path.module}/functions/hello-world.js"
+  source_dir = "${path.module}/functions"
   output_path = "lambdaFunction.zip"
 }
 
@@ -82,7 +82,7 @@ resource "aws_lambda_function" "set_retention_for_new_log_groups_function" {
   role          = aws_iam_role.lambda_execution_role.arn
   runtime       = "nodejs22.x"
   filename      = data.archive_file.lambda_function_zip.output_path
-  handler       = "hello-world.newLogGroups"
+  handler       = "set-retention.newLogGroups"
   memory_size   = 128
   timeout       = 6
 
@@ -99,7 +99,7 @@ resource "aws_lambda_function" "set_retention_for_existing_log_groups_function" 
   role          = aws_iam_role.lambda_execution_role.arn
   runtime       = "nodejs22.x"
   filename      = data.archive_file.lambda_function_zip.output_path
-  handler       = "hello-world.existingLogGroups"
+  handler       = "set-retention.existingLogGroups"
   memory_size   = 128
   timeout       = 900
 
