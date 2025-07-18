@@ -1,5 +1,9 @@
-variable "retention_days" {
-  type        = number
-  default     = 7
-  description = "The number of days to retain logs in CloudWatch. If not specified, the default retention policy will be applied."
+variable "versions_to_keep" {
+  type    = number
+  default = 3
+  validation {
+    condition     = var.versions_to_keep >= 0
+    error_message = "The number of versions to keep must be a non-negative integer."
+  }
+  description = "How many versions to keep, even if they are not aliased."
 }

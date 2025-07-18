@@ -1,4 +1,4 @@
-output "retention_days" {
-  value       = var.retention_days
-  description = "The number of days to retain logs in CloudWatch."
+output "versions_to_keep" {
+  value       = var.versions_to_keep
+  description = "The number of versions to keep, even if they are not aliased."
 }
