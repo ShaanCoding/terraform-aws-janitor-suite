@@ -10,14 +10,9 @@
 #     SemanticVersion: 1.7.0
 #     SourceCodeUrl: https://github.com/lumigo/SAR-Lambda-Janitor
 
-#   LogGroup:
-#     Type: AWS::Logs::LogGroup
-#     Properties:
-#       LogGroupName: !Sub /aws/lambda/${Clean}
-
 # Add a cloudwatch log group for the lambda function to log its output to
 resource "aws_cloudwatch_log_group" "lambda_janitor_log_groups" {
-  name = "/aws/lambda/lambda_janitor_log_groups"
+  name = "/aws/lambda/lambda_janitor_function"
 }
 
 # Create the following resources:
@@ -96,8 +91,25 @@ resource "aws_lambda_function" "lambda_janitor_function" {
   }
 }
 
-#   Events:
-# CleanScheduledEvent:
-#           Type: Schedule
-#           Properties:
-#             Schedule: rate(1 hour)
+# Add a CloudWatch Event Rule to schedule the Lambda function
+resource "aws_cloudwatch_event_rule" "clean_scheduled_event" {
+  name                = "clean_scheduled_event"
+  description         = "Schedule to trigger the Lambda function every hour"
+  schedule_expression = "rate(1 hour)"
+}
+
+# Add a target for the CloudWatch Event Rule to invoke the Lambda function
+resource "aws_cloudwatch_event_target" "lambda_janitor_target" {
+  target_id = "lambda_janitor_target"
+  rule      = aws_cloudwatch_event_rul.clean_scheduled_event.name
+  arn       = aws_lambda_function.lambda_janitor_function.arn
+}
+
+# Add permissions to allow the CloudWatch Event Rule to invoke the Lambda function
+resource "aws_lambda_permission" "allow_event_rule" {
+  statement_id  = "AllowExecutionFromEventRule"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_janitor_function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.clean_scheduled_event.arn
+}
