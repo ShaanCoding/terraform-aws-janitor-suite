@@ -10,7 +10,8 @@
 # it has action PutRetentionPolicy and DescribeLogGroup on everything *
 # 
 
-
+# Add a cloudwatch log group for the new log groups lambda & the existing log groups lambda
+# This in turn will be used to log the output of the lambda functions
 resource "aws_cloudwatch_log_group" "set_retention_for_new_log_groups" {
     name = "/aws/lambda/set-retention-for-new-log-groups"
 }
@@ -19,6 +20,9 @@ resource "aws_cloudwatch_log_group" "set_retention_for_existing_log_groups" {
     name = "/aws/lambda/set-retention-for-existing-log-groups"
 }
 
+# Create the iam role, allowing the lambda to assume the role
+# Create iam policy, allowing the lambda to put retention policy and describe log groups
+# Attach the policy to the role
 resource "aws_iam_role" "lambda_execution_role" {
     name = "lambda_execution_role"
     assume_role_policy = jsonencode({
@@ -54,6 +58,8 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
     policy_arn = aws_iam_policy.lambda_policy.arn
 }
 
+# Create the lambda functions for setting retention policies
+# One for new log groups and one for existing log groups
 resource "aws_lambda_function" "set_retention_for_new_log_groups_function" {
     description = "Updates the retention policy for a newly created CloudWatch log group to the specified number of days."
     function_name = "set_retention_for_new_log_groups"
@@ -88,8 +94,9 @@ resource "aws_lambda_function" "set_retention_for_existing_log_groups_function" 
     }
 }
 
-# Create a cloudwatch event to trigger the lambda for new log groups
-# on 
+# Create a CloudWatch event rule to trigger the new log groups lambda function
+# We also create event targets to link the rule to the lambda function
+# Then we add permissions to allow the event rule to invoke the lambda function
 resource "aws_cloudwatch_event_rule" "new_log_groups_rule" {
     name = "new_log_groups_rule"
     description = "Trigger for new log groups"
@@ -116,3 +123,5 @@ resource "aws_lambda_permission" "allow_event_rule" {
     principal = "events.amazonaws.com"
     source_arn = aws_cloudwatch_event_rule.new_log_groups_rule.arn
 }
+
+# Need to handle existing log groups
