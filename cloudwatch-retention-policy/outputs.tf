@@ -1,4 +1,4 @@
-# output "id" {
-#   value       = azurerm_user_assigned_identity.this.id
-#   description = "The ID of created managed identity"
-# }
+output "retention_days" {
+  value       = var.retention_days
+  description = "The number of days to retain logs in CloudWatch."
+}
