@@ -18,6 +18,8 @@ module.exports.existingLogGroups = async () => {
 module.exports.newLogGroups = async (event) => {
   log.debug("processing new log group...", { event });
 
-  const logGroupName = event.detail.requestParameters.logGroupName;
+  const logGroupName = event.event.requestParameters.logGroupName;
+
+  // const logGroupName = event.detail.requestParameters.logGroupName;
   await cloudWatchLogs.setExpiry(logGroupName);
 };

@@ -71,7 +71,7 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
 data "archive_file" "lambda_function_zip" {
   type        = "zip"
   source_dir = "${path.module}/functions"
-  output_path = "lambdaFunction.zip"
+  output_path = "cloudwatch-retention-policy-lambda.zip"
 }
 
 # Create the lambda functions for setting retention policies

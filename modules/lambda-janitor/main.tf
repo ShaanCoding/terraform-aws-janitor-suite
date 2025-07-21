@@ -1,28 +1,10 @@
-#   AWS::ServerlessRepo::Application:
-#     Name: lambda-janitor
-#     Description: Cron job for deleting old, unused versions of Lambda functions to clean up storage space
-#     Author: Lumigo
-#     SpdxLicenseId: MIT
-#     LicenseUrl: LICENSE.txt
-#     ReadmeUrl: README.md
-#     Labels: ['lambda', 'cron']
-#     HomePageUrl: https://github.com/lumigo/SAR-Lambda-Janitor
-#     SemanticVersion: 1.7.0
-#     SourceCodeUrl: https://github.com/lumigo/SAR-Lambda-Janitor
-
 # Add a cloudwatch log group for the lambda function to log its output to
 resource "aws_cloudwatch_log_group" "lambda_janitor_log_groups" {
   name = "/aws/lambda/lambda_janitor_function"
 }
 
-# Create the following resources:
-# IAM Role for the lambda function to assume
-# IAM policy for the lambda function (with the necessary permissions)
-# IAM role policy attachment to attach the policy to the role
-# And then finally a lambda!
-
 resource "aws_iam_role" "lambda_execution_role" {
-  name = "lambda_execution_role"
+  name = "lambda_janitor_lambda_execution_role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -37,7 +19,7 @@ resource "aws_iam_role" "lambda_execution_role" {
 }
 
 resource "aws_iam_policy" "lambda_policy" {
-  name = "lambda_policy"
+  name = "lambda_janitor_lambda_policy"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -67,8 +49,8 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
 # Bundle up the lambda function code
 data "archive_file" "lambda_function_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/functions"
-  output_path = "lambdaFunction.zip"
+  source_dir = "${path.module}/functions"
+  output_path = "lambda-janitor-lambda.zip"
 }
 
 # Create the lambda function
@@ -101,7 +83,7 @@ resource "aws_cloudwatch_event_rule" "clean_scheduled_event" {
 # Add a target for the CloudWatch Event Rule to invoke the Lambda function
 resource "aws_cloudwatch_event_target" "lambda_janitor_target" {
   target_id = "lambda_janitor_target"
-  rule      = aws_cloudwatch_event_rul.clean_scheduled_event.name
+  rule      = aws_cloudwatch_event_rule.clean_scheduled_event.name
   arn       = aws_lambda_function.lambda_janitor_function.arn
 }
 
