@@ -113,12 +113,13 @@ resource "aws_lambda_function" "set_retention_for_existing_log_groups_function" 
 # Create a CloudWatch event rule to trigger the new log groups lambda function
 # We also create event targets to link the rule to the lambda function
 # Then we add permissions to allow the event rule to invoke the lambda function
+
 resource "aws_cloudwatch_event_rule" "new_log_groups_rule" {
   name        = "new_log_groups_rule"
   description = "Trigger for new log groups"
   event_pattern = jsonencode({
-    source      = ["aws.logs"],
-    detail_type = ["AWS Console Sign-in via CloudTrail"],
+    source      = ["aws.cloudtrail"],
+    detail_type = ["AWS API Call via CloudTrail"],
     detail = {
       eventSource = ["logs.amazonaws.com"],
       eventName   = ["CreateLogGroup"]
@@ -140,26 +141,8 @@ resource "aws_lambda_permission" "allow_event_rule" {
   source_arn    = aws_cloudwatch_event_rule.new_log_groups_rule.arn
 }
 
-# Need to handle existing log groups - this will run on terraform apply
-resource "aws_cloudwatch_event_rule" "existing_log_groups_rule" {
-  name        = "existing_log_groups_rule"
-  description = "Trigger for existing log groups - On terraform apply"
-  event_pattern = jsonencode({
-    source      = ["aws.terraform"],
-    detail_type = ["Terraform Apply"],
-  })
-}
-
-resource "aws_cloudwatch_event_target" "existing_log_groups_target" {
-  target_id = "existing-log-groups-target"
-  rule      = aws_cloudwatch_event_rule.existing_log_groups_rule.name
-  arn       = aws_lambda_function.set_retention_for_existing_log_groups_function.arn
-}
-
-resource "aws_lambda_permission" "allow_existing_event_rule" {
-  statement_id  = "AllowExecutionFromExistingCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.set_retention_for_existing_log_groups_function.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.existing_log_groups_rule.arn
+resource "null_resource" "trigger_existing_log_groups" {
+  provisioner "local-exec" {
+    command = "aws lambda invoke --function-name ${aws_lambda_function.set_retention_for_existing_log_groups_function.function_name}  --payload '{}' ${local.null_device}"
+  }
 }
